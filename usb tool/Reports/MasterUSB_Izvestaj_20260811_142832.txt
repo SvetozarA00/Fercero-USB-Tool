@@ -1,0 +1,65 @@
+﻿=== COMPREHENSIVE HARDVERSKI I SISTEMSKI SKEN ===
+Očitavanje OS-a, procesora i memorije...
+[OS] Microsoft Windows 11 Pro (64-bit) | Verzija: 25H2 (Build 26200.8973)
+[POSLEDNJI UPDATE] KB5101684 (07/30/2026 00:00:00)
+[CPU] AMD Ryzen 5 5600X 6-Core Processor              | Jezgara: 6 | Niti: 12
+[RAM] Ukupno: 23.89 GB | Slobodno: 19.24 GB
+Očitavanje GPU-a i RAM slotova...
+[GPU] Model: NVIDIA GeForce GTX 1050 Ti | VRAM: 4 GB | Drajver: 32.0.15.8266
+[RAM SLOT] Slot: DIMM_A2 | Kapacitet: 8 GB | Brzina: 3200 MHz
+[RAM SLOT] Slot: DIMM_B1 | Kapacitet: 8 GB | Brzina: 3200 MHz
+[RAM SLOT] Slot: DIMM_B2 | Kapacitet: 8 GB | Brzina: 3200 MHz
+Provera S.M.A.R.T. zdravlja diskova...
+[DISK OK] TOSHIBA DT01ACA050 (HDD) | Status: ZDRAV
+[DISK OK] VendorCo ProductCode (NVMe/SSD) | Status: ZDRAV
+[DISK OK] GIGABYTE GP-GSTFS31120GNTD (SSD) | Status: ZDRAV
+[DISK OK] Apacer AS340 120GB (SSD) | Status: ZDRAV
+Analiza Windows PnP uređaja i kodova grešaka...
+[KVAR UREĐAJA] ROOT\HIDCLASS\0000 (Windows Code 28)
+   -> REŠENJE: Reinstalirajte drajver ili proverite priključak u Device Manager-u.
+
+=== ANALIZA SISTEMSKIH DNEVNIKA (POSLEDNJIH 7 DANA) ===
+[INCIDENT] Vreme: 11.08.2026. 13:31:11 | Izvor: Microsoft-Windows-Kernel-Boot | Event ID: 124
+   -> PROBLEM: VBS bezbednosna provera (ID 124).
+   -> ZAŠTO: Zahteva aktivnu virtualizaciju u BIOS-u.
+   -> REŠENJE: Omogućite CPU Virtualization u BIOS podešavanjima.
+[INCIDENT] Vreme: 11.08.2026. 13:31:11 | Izvor: Microsoft-Windows-Hyper-V-Hypervisor | Event ID: 42
+   -> PROBLEM: Virtualizacija nije pokrenuta (ID 42).
+   -> ZAŠTO: SVM Mode ili VT-x je isključen u BIOS-u.
+   -> REŠENJE: Uđite u BIOS i uključite 'SVM Mode' ili 'VT-x'.
+[INCIDENT] Vreme: 10.08.2026. 23:20:05 | Izvor: Microsoft-Windows-Kernel-Boot | Event ID: 124
+   -> PROBLEM: VBS bezbednosna provera (ID 124).
+   -> ZAŠTO: Zahteva aktivnu virtualizaciju u BIOS-u.
+   -> REŠENJE: Omogućite CPU Virtualization u BIOS podešavanjima.
+[INCIDENT] Vreme: 10.08.2026. 23:20:05 | Izvor: Microsoft-Windows-Hyper-V-Hypervisor | Event ID: 42
+   -> PROBLEM: Virtualizacija nije pokrenuta (ID 42).
+   -> ZAŠTO: SVM Mode ili VT-x je isključen u BIOS-u.
+   -> REŠENJE: Uđite u BIOS i uključite 'SVM Mode' ili 'VT-x'.
+[INCIDENT] Vreme: 09.08.2026. 20:41:50 | Izvor: Microsoft-Windows-WHEA-Logger | Event ID: 18
+   -> PROBLEM: Hardverska greška CPU/RAM/PCIe.
+   -> ZAŠTO: Pad napona, pregrevanje ili instabilnost takta.
+   -> REŠENJE: Isključite overclock/XMP, osvežite BIOS i proverite hlađenje.
+[INCIDENT] Vreme: 09.08.2026. 20:41:50 | Izvor: Microsoft-Windows-WHEA-Logger | Event ID: 18
+   -> PROBLEM: Hardverska greška CPU/RAM/PCIe.
+   -> ZAŠTO: Pad napona, pregrevanje ili instabilnost takta.
+   -> REŠENJE: Isključite overclock/XMP, osvežite BIOS i proverite hlađenje.
+[INCIDENT] Vreme: 09.08.2026. 20:41:41 | Izvor: Microsoft-Windows-Kernel-Power | Event ID: 41
+   -> PROBLEM: Nagli prekid napajanja (Event ID 41).
+   -> ZAŠTO: Pad napona, pregrevanje ili otkazivanje PSU napajanja.
+   -> REŠENJE: Proverite napajanje, produžni kabl i hladnjak procesora.
+[INCIDENT] Vreme: 09.08.2026. 20:41:31 | Izvor: Microsoft-Windows-Kernel-Boot | Event ID: 124
+   -> PROBLEM: VBS bezbednosna provera (ID 124).
+   -> ZAŠTO: Zahteva aktivnu virtualizaciju u BIOS-u.
+   -> REŠENJE: Omogućite CPU Virtualization u BIOS podešavanjima.
+[INCIDENT] Vreme: 09.08.2026. 20:41:31 | Izvor: Microsoft-Windows-Hyper-V-Hypervisor | Event ID: 42
+   -> PROBLEM: Virtualizacija nije pokrenuta (ID 42).
+   -> ZAŠTO: SVM Mode ili VT-x je isključen u BIOS-u.
+   -> REŠENJE: Uđite u BIOS i uključite 'SVM Mode' ili 'VT-x'.
+[INCIDENT] Vreme: 09.08.2026. 20:41:49 | Izvor: EventLog | Event ID: 6008
+   -> PROBLEM: Evidencija neočekivanog gašenja (ID 6008).
+   -> ZAŠTO: Nenadani prekid rada u prethodnoj sesiji.
+   -> REŠENJE: Proverite stabilnost strujne mreže i hlađenja.
+=== HARDVERSKI SKEN I ANALIZA ZAVRŠENI ===
+
+[OK] IZVEŠTAJ SAČUVAN NA DESKTOPU: C:\Users\sveto\OneDrive\Desktop\MasterUSB_Izvestaj_20260811_142832.txt
+
