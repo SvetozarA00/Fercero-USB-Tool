@@ -1,10 +1,10 @@
-﻿<# ::
+<# ::
 @echo off
 set BAT_DIR=%~dp0
 powershell.exe -NoProfile -ExecutionPolicy Bypass -sta -WindowStyle Hidden -Command "& ([ScriptBlock]::Create((Get-Content -Raw -LiteralPath '%~f0')))"
 if %ERRORLEVEL% NEQ 0 (
     echo.
-    echo [GRESKA] Aplikacija je naisla na problem pri pokretanju (Exit Code: %ERRORLEVEL%).
+    echo [ERROR] The application encountered a problem during startup (Exit Code: %ERRORLEVEL%).
     pause
 )
 exit /b
@@ -18,7 +18,7 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 try {
 
 # ==============================================================================
-# 1. ARHITEKTURA I VIŠENITNI ENGINE (POZADINSKI RUNSPACE)
+# 1. ARCHITECTURE AND MULTITHREADED ENGINE (BACKGROUND RUNSPACE)
 # ==============================================================================
 $script:MsgQueue = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
 $script:IsBusy   = $false
@@ -36,84 +36,84 @@ function Test-Admin {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-# Enciklopedijska Baza Device Manager Kodova (Codes 1 - 54)
+# Encyclopedic Knowledge Base of Device Manager Codes (Codes 1 - 54)
 $CodeManagerDict = @{
-    1  = @{ Symbol="CM_PROB_NOT_CONFIGURED"; Opis="Uređaj nije konfigurisan ili drajveri nisu instalirani."; Sugestija="Instalirajte zvanične drajvere sa sajta proizvođača." }
-    3  = @{ Symbol="CM_PROB_OUT_OF_MEMORY"; Opis="Nedovoljno RAM memorije za drajver ili je drajver oštećen."; Sugestija="Oslobodite RAM memoriju ili restartujte računar." }
-    9  = @{ Symbol="CM_PROB_INVALID_DATA"; Opis="Windows ne može da identifikuje hardver."; Sugestija="Proverite BIOS/UEFI podešavanja ili ažurirajte firmware." }
-    10 = @{ Symbol="CM_PROB_FAILED_START"; Opis="Uređaj ne može da se pokrene (Hardware Timeout)."; Sugestija="Ažurirajte drajver, ponovo povežite uređaj ili proverite kabl." }
-    12 = @{ Symbol="CM_PROB_OUT_OF_EARLY_RES"; Opis="Nema slobodnih sistemskih resursa (IRQ/IO)."; Sugestija="Onemogućite nepotrebne uređaje u BIOS-u." }
-    14 = @{ Symbol="CM_PROB_NEED_RESTART"; Opis="Zahteva ponovno pokretanje računara."; Sugestija="Restartujte Windows računar." }
-    16 = @{ Symbol="CM_PROB_PARTIAL_LOG_CONF"; Opis="Resursi uređaja nisu u potpunosti identifikovani."; Sugestija="Dodelite resurse ručno ili ažurirajte drajver." }
-    18 = @{ Symbol="CM_PROB_REINSTALL"; Opis="Potrebno je ponovo instalirati drajver."; Sugestija="Uklonite uređaj iz Device Manager-a i skenirajte promene." }
-    19 = @{ Symbol="CM_PROB_REGISTRY_UNKNOWN"; Opis="Podaci u Windows Registru su oštećeni."; Sugestija="Obrišite Upper/LowerFilters ili pokrenite popravku sistema." }
-    21 = @{ Symbol="CM_PROB_WILL_BE_REMOVED"; Opis="Uređaj se uklanja iz sistema."; Sugestija="Sačekajte ili restartujte računar." }
-    22 = @{ Symbol="CM_PROB_DISABLED"; Opis="Uređaj je onemogućen u Windows-u."; Sugestija="Omogućite uređaj u Device Manager-u (Right Click -> Enable)." }
-    24 = @{ Symbol="CM_PROB_DEVLOADER_NOT_READY"; Opis="Nedovršena instalacija drajvera ili loš spoj."; Sugestija="Proverite priključak i ponovo instalirajte drajver." }
-    28 = @{ Symbol="CM_PROB_FAILED_INSTALL"; Opis="Drajver nije instaliran (Nepoznat uređaj)."; Sugestija="Preuzmite drajver preko Windows Update-a ili sajta proizvođača." }
-    29 = @{ Symbol="CM_PROB_HARDWARE_DISABLED"; Opis="Uređaj je onemogućen u BIOS/UEFI."; Sugestija="Omogućite uređaj u BIOS podešavanjima matične ploče." }
-    31 = @{ Symbol="CM_PROB_FAILED_ADD"; Opis="Windows ne može da učita drajvere za ovaj hardver."; Sugestija="Ažurirajte drajver ili uklonite nekompatibilni softver." }
-    32 = @{ Symbol="CM_PROB_DISABLED_SERVICE"; Opis="Servis drajvera je onemogućen u Registru."; Sugestija="Aktivirajte servis u Windows Services ili reinstalirajte drajver." }
-    33 = @{ Symbol="CM_PROB_TRANSLATION_FAILED"; Opis="Problem sa prevođenjem resursa od strane sistema."; Sugestija="Ažurirajte BIOS/UEFI matične ploče." }
-    34 = @{ Symbol="CM_PROB_NO_SOFTCONFIG"; Opis="Nedostaju konfigurisane vrednosti za uređaj."; Sugestija="Konfigurišite uređaj ručno po uputstvu proizvođača." }
-    35 = @{ Symbol="CM_PROB_BIOS_TABLE"; Opis="Sistemski BIOS ne sadrži informacije o uređaju."; Sugestija="Flashujte najnoviju verziju BIOS/UEFI firmware-a." }
-    36 = @{ Symbol="CM_PROB_IRQ_TRANSLATION_FAILED"; Opis="Prekid (IRQ) nije pravilno dodeljen."; Sugestija="Promenite PCI slot uređaja ili osvežite BIOS." }
-    37 = @{ Symbol="CM_PROB_FAILED_DRIVER_ENTRY"; Opis="Drajver ne može da se inicijalizuje."; Sugestija="Reinstalirajte zvanični drajver." }
-    38 = @{ Symbol="CM_PROB_DRIVER_FAILED_PRIOR"; Opis="Prethodna instanca drajvera ostala u RAM-u."; Sugestija="Restartujte računar radi čišćenja memorije." }
-    39 = @{ Symbol="CM_PROB_DRIVER_FAILED_LOAD"; Opis="Drajver nedostaje ili je oštećen na disku."; Sugestija="Ponovo instalirajte drajver u Device Manager-u." }
-    40 = @{ Symbol="CM_PROB_DRIVER_SERVICE_KEY_INVALID"; Opis="Nevažeći ključ servisa u Registru."; Sugestija="Ažurirajte drajver uređaja." }
-    41 = @{ Symbol="CM_PROB_LEGACY_SERVICE_ERROR"; Opis="Drajver je učitan ali uređaj nije pronađen."; Sugestija="Proverite da li je uređaj fizički priključen." }
-    42 = @{ Symbol="CM_PROB_DUPLICATE_DEVICE"; Opis="Detektovan duplirani rad uređaja u memoriji."; Sugestija="Restartujte računar ili uklonite duplikat u Device Manager-u." }
-    43 = @{ Symbol="CM_PROB_FAILED_POST_START"; Opis="Windows zaustavio uređaj (Kvar GPU-a, pad napona ili USB krah)."; Sugestija="Očistite drajvere DDU alatom (za GPU), reinstalirajte drajver i proverite napajanje." }
-    44 = @{ Symbol="CM_PROB_HALTED"; Opis="Aplikacija ili servis je zaustavio rad hardvera."; Sugestija="Restartujte aplikaciju ili računar." }
-    45 = @{ Symbol="CM_PROB_NOT_PRESENT"; Opis="Uređaj nije fizički povezan sa računarom."; Sugestija="Proverite USB/SATA kabl i ponovo priključite uređaj." }
-    46 = @{ Symbol="CM_PROB_MOVED"; Opis="Pristup onemogućen usled pripreme za gašenje."; Sugestija="Sačekajte reboot sistema." }
-    47 = @{ Symbol="CM_PROB_TOO_EARLY"; Opis="Uređaj je pripremljen za 'Safe Removal'."; Sugestija="Iskopčajte pa ponovo ukopčajte USB." }
-    48 = @{ Symbol="CM_PROB_NO_VALID_LOG_CONF"; Opis="Softver blokiran zbog nekompatibilnosti sa Windows-om."; Sugestija="Preuzmite najnoviji drajver za vašu verziju Windows-a." }
-    49 = @{ Symbol="CM_PROB_INVALID_MAIN_INT"; Opis="Windows Registar hive je prevelik."; Sugestija="Očistite Registar ili pokrenite popravku sistema." }
-    50 = @{ Symbol="CM_PROB_FIXED_RES_CONFLICT"; Opis="Sukob fiksnih postavki uređaja."; Sugestija="Promenite postavke ili reinstalirajte uređaj." }
-    51 = @{ Symbol="CM_PROB_SYSTEM_SHUTDOWN"; Opis="Uređaj na čekanju za reboot."; Sugestija="Restartujte računar." }
-    52 = @{ Symbol="CM_PROB_UNSIGNED_DRIVER"; Opis="Digitalni potpis drajvera je nevažeći."; Sugestija="Instalirajte potpisani drajver ili isključite Driver Signature Enforcement." }
-    53 = @{ Symbol="CM_PROB_VETOED"; Opis="Antivirus ili bezbednosni filter blokirao drajver."; Sugestija="Proverite antivirus podešavanja ili ažurirajte drajver." }
-    54 = @{ Symbol="CM_PROB_RESET_FAILED"; Opis="Resetovanje uređaja nije uspelo."; Sugestija="Restartujte računar ili proverite fizički spoj." }
+    1  = @{ Symbol="CM_PROB_NOT_CONFIGURED"; Description="Device is not configured or drivers are not installed."; Suggestion="Install official drivers from the manufacturer's website." }
+    3  = @{ Symbol="CM_PROB_OUT_OF_MEMORY"; Description="Insufficient RAM memory for the driver or the driver is corrupted."; Suggestion="Free up RAM memory or restart the computer." }
+    9  = @{ Symbol="CM_PROB_INVALID_DATA"; Description="Windows cannot identify the hardware."; Suggestion="Check BIOS/UEFI settings or update firmware." }
+    10 = @{ Symbol="CM_PROB_FAILED_START"; Description="Device cannot start (Hardware Timeout)."; Suggestion="Update driver, reconnect device, or check the cable." }
+    12 = @{ Symbol="CM_PROB_OUT_OF_EARLY_RES"; Description="No free system resources available (IRQ/IO)."; Suggestion="Disable unnecessary devices in BIOS." }
+    14 = @{ Symbol="CM_PROB_NEED_RESTART"; Description="Requires a computer restart."; Suggestion="Restart your Windows computer." }
+    16 = @{ Symbol="CM_PROB_PARTIAL_LOG_CONF"; Description="Device resources are not fully identified."; Suggestion="Assign resources manually or update driver." }
+    18 = @{ Symbol="CM_PROB_REINSTALL"; Description="Driver reinstallation required."; Suggestion="Remove device from Device Manager and scan for hardware changes." }
+    19 = @{ Symbol="CM_PROB_REGISTRY_UNKNOWN"; Description="Data in Windows Registry is corrupted."; Suggestion="Remove Upper/LowerFilters or run system repair." }
+    21 = @{ Symbol="CM_PROB_WILL_BE_REMOVED"; Description="Device is being removed from system."; Suggestion="Wait or restart the computer." }
+    22 = @{ Symbol="CM_PROB_DISABLED"; Description="Device is disabled in Windows."; Suggestion="Enable device in Device Manager (Right Click -> Enable)." }
+    24 = @{ Symbol="CM_PROB_DEVLOADER_NOT_READY"; Description="Incomplete driver installation or loose connection."; Suggestion="Check connection and reinstall driver." }
+    28 = @{ Symbol="CM_PROB_FAILED_INSTALL"; Description="Driver not installed (Unknown device)."; Suggestion="Download driver via Windows Update or manufacturer website." }
+    29 = @{ Symbol="CM_PROB_HARDWARE_DISABLED"; Description="Device is disabled in BIOS/UEFI."; Suggestion="Enable device in motherboard BIOS settings." }
+    31 = @{ Symbol="CM_PROB_FAILED_ADD"; Description="Windows cannot load drivers for this hardware."; Suggestion="Update driver or remove incompatible software." }
+    32 = @{ Symbol="CM_PROB_DISABLED_SERVICE"; Description="Driver service disabled in Registry."; Suggestion="Enable service in Windows Services or reinstall driver." }
+    33 = @{ Symbol="CM_PROB_TRANSLATION_FAILED"; Description="Resource translation error by system."; Suggestion="Update motherboard BIOS/UEFI." }
+    34 = @{ Symbol="CM_PROB_NO_SOFTCONFIG"; Description="Missing configured values for device."; Suggestion="Configure device manually per manufacturer instructions." }
+    35 = @{ Symbol="CM_PROB_BIOS_TABLE"; Description="System BIOS does not contain device information."; Suggestion="Flash latest version of BIOS/UEFI firmware." }
+    36 = @{ Symbol="CM_PROB_IRQ_TRANSLATION_FAILED"; Description="Interrupt (IRQ) translation failed."; Suggestion="Change PCI slot of device or refresh BIOS." }
+    37 = @{ Symbol="CM_PROB_FAILED_DRIVER_ENTRY"; Description="Driver cannot initialize."; Suggestion="Reinstall official driver." }
+    38 = @{ Symbol="CM_PROB_DRIVER_FAILED_PRIOR"; Description="Previous instance of driver remains in RAM."; Suggestion="Restart computer to clear memory." }
+    39 = @{ Symbol="CM_PROB_DRIVER_FAILED_LOAD"; Description="Driver missing or corrupted on disk."; Suggestion="Reinstall driver in Device Manager." }
+    40 = @{ Symbol="CM_PROB_DRIVER_SERVICE_KEY_INVALID"; Description="Invalid service key in Registry."; Suggestion="Update device driver." }
+    41 = @{ Symbol="CM_PROB_LEGACY_SERVICE_ERROR"; Description="Driver loaded but device not found."; Suggestion="Check if device is physically connected." }
+    42 = @{ Symbol="CM_PROB_DUPLICATE_DEVICE"; Description="Duplicate device operation detected in memory."; Suggestion="Restart computer or remove duplicate in Device Manager." }
+    43 = @{ Symbol="CM_PROB_FAILED_POST_START"; Description="Windows stopped device (GPU crash, voltage drop, or USB crash)."; Suggestion="Clean drivers with DDU tool (for GPU), reinstall driver, and check power supply." }
+    44 = @{ Symbol="CM_PROB_HALTED"; Description="Application or service stopped hardware operation."; Suggestion="Restart application or computer." }
+    45 = @{ Symbol="CM_PROB_NOT_PRESENT"; Description="Device not physically connected to computer."; Suggestion="Check USB/SATA cable and reconnect device." }
+    46 = @{ Symbol="CM_PROB_MOVED"; Description="Access denied due to shutdown preparation."; Suggestion="Wait for system reboot." }
+    47 = @{ Symbol="CM_PROB_TOO_EARLY"; Description="Device prepared for 'Safe Removal'."; Suggestion="Unplug and re-plug USB device." }
+    48 = @{ Symbol="CM_PROB_NO_VALID_LOG_CONF"; Description="Software blocked due to Windows incompatibility."; Suggestion="Download latest driver for your version of Windows." }
+    49 = @{ Symbol="CM_PROB_INVALID_MAIN_INT"; Description="Windows Registry hive is too large."; Suggestion="Clean Registry or run system repair." }
+    50 = @{ Symbol="CM_PROB_FIXED_RES_CONFLICT"; Description="Fixed device settings conflict."; Suggestion="Change settings or reinstall device." }
+    51 = @{ Symbol="CM_PROB_SYSTEM_SHUTDOWN"; Description="Device pending reboot."; Suggestion="Restart computer." }
+    52 = @{ Symbol="CM_PROB_UNSIGNED_DRIVER"; Description="Driver digital signature is invalid."; Suggestion="Install signed driver or disable Driver Signature Enforcement." }
+    53 = @{ Symbol="CM_PROB_VETOED"; Description="Antivirus or security filter blocked driver."; Suggestion="Check antivirus settings or update driver." }
+    54 = @{ Symbol="CM_PROB_RESET_FAILED"; Description="Device reset failed."; Suggestion="Restart computer or check physical connection." }
 }
 
-# Enciklopedijska Baza Sistemskih Logova
+# Encyclopedic Knowledge Base of System Logs
 $EventKB = @{
-    "WHEA-Logger" = @{ Opis="Hardverska greška CPU/RAM/PCIe."; Zasto="Pad napona, pregrevanje ili instabilnost takta."; Sugestija="Isključite overclock/XMP, osvežite BIOS i proverite hlađenje." }
-    "Kernel-Power" = @{ Opis="Nagli prekid napajanja (Event ID 41)."; Zasto="Pad napona, pregrevanje ili otkazivanje PSU napajanja."; Sugestija="Proverite napajanje, produžni kabl i hladnjak procesora." }
-    "Hyper-V-Hypervisor" = @{ Opis="Virtualizacija nije pokrenuta (ID 42)."; Zasto="SVM Mode ili VT-x je isključen u BIOS-u."; Sugestija="Uđite u BIOS i uključite 'SVM Mode' ili 'VT-x'." }
-    "Kernel-Boot" = @{ Opis="VBS bezbednosna provera (ID 124)."; Zasto="Zahteva aktivnu virtualizaciju u BIOS-u."; Sugestija="Omogućite CPU Virtualization u BIOS podešavanjima." }
-    "EventLog" = @{ Opis="Evidencija neočekivanog gašenja (ID 6008)."; Zasto="Nenadani prekid rada u prethodnoj sesiji."; Sugestija="Proverite stabilnost strujne mreže i hlađenja." }
-    "DistributedCOM" = @{ Opis="DCOM tajmaut servisa (ID 10010/10016)."; Zasto="Kratak zoj u odzivu pozadinske aplikacije."; Sugestija="Poruka je 95% bezopasna i ne utiče na stabilnost." }
-    "BugCheck" = @{ Opis="Plavi ekran smrti (BSOD ID 1001)."; Zasto="Fatalna greška drajvera ili radne memorije."; Sugestija="Proverite C:\Windows\Minidump i pokrenite RAM test." }
-    "Disk" = @{ Opis="I/O greška diska (ID 7/11/15/51)."; Zasto="Loši sektori, problem sa kablom ili NVMe/SATA kontrolerom."; Sugestija="Hitno napravite bekap, pokrenite 'chkdsk C: /f /r' i proverite disk." }
-    "Ntfs" = @{ Opis="Oštećenje strukture fajl sistema (ID 55/137)."; Zasto="Nagli prekid struje tokom upisa na disk."; Sugestija="Pokrenite 'chkdsk C: /f' za oporavak particije." }
-    "Display" = @{ Opis="Rušenje i oporavak GPU drajvera (ID 4101)."; Zasto="Pregrevanje grafike, nestabilan takt ili loš drajver."; Sugestija="Očistite drajvere DDU alatom i instalirajte nov drajver." }
-    "nvlddmkm" = @{ Opis="Rušenje NVIDIA GeForce drajvera."; Zasto="Gubitak odziva GPU-a usled pregrevanja ili napona."; Sugestija="Reinstalirajte NVIDIA drajvere (Clean Install)." }
-    "amdkmdag" = @{ Opis="Rušenje AMD Radeon drajvera."; Zasto="Otkazivanje Radeon GPU drajvera."; Sugestija="Resetujte Radeon Adrenalin podešavanja i ažurirajte drajver." }
-    "igfx" = @{ Opis="Rušenje Intel integrisane grafike."; Zasto="Gubitak odziva integrisanog GPU-a u procesoru."; Sugestija="Ažurirajte Intel HD/Iris drajver." }
-    "Service Control Manager" = @{ Opis="Rušenje Windows servisa (ID 7000/7001)."; Zasto="Problem sa sistemskim zavisnostima servisa."; Sugestija="Pokrenite Opciju 5 (Popravka Sistema DISM/SFC)." }
-    "Volmgr" = @{ Opis="Neuspešan zapis crash dump-a (ID 161)."; Zasto="Gubitak napajanja SSD-a u momentu padu sistema."; Sugestija="Proverite spajanje SSD-a i slobodan prostor na C: disku." }
-    "Kernel-General" = @{ Opis="Problem sa upisom u Registar (ID 5/6)."; Zasto="Prekinut upis u System Hive usled gašenja."; Sugestija="Pokrenite SFC /scannow popravku." }
-    "Kernel-PNP" = @{ Opis="Drajver PnP uređaja nije učitan (ID 219)."; Zasto="Nedostaje drajver za priključeni hardver."; Sugestija="Instalirajte zvanični drajver u Device Manager-u." }
-    "BitLocker-Driver" = @{ Opis="Problem sa BitLocker enkripcijom."; Zasto="Promene u TPM čipu ili onemogućen pristup."; Sugestija="Sačuvajte BitLocker recovery ključ." }
-    "WindowsUpdateClient" = @{ Opis="Greška pri ažuriranju (ID 20/31)."; Zasto="Oštećen keš Windows Update-a."; Sugestija="Pokrenite Opciju 6 (Popravka Windows Update-a)." }
-    "SideBySide" = @{ Opis="Greška C++ biblioteke (ID 33/35/59)."; Zasto="Nedostaje Microsoft Visual C++ Redistributable."; Sugestija="Instalirajte Visual C++ All-in-One paket." }
-    "Application Error" = @{ Opis="Kritično rušenje programa (.exe ID 1000)."; Zasto="Nevažeći pristup memorijskoj adresi."; Sugestija="Reinstalirajte navedeni program." }
-    "Application Hang" = @{ Opis="Zamrzavanje aplikacije (ID 1002)."; Zasto="Beskonačna petlja ili prekinut I/O odziv."; Sugestija="Proverite opterećenje CPU-a i zdravlje diska." }
-    "Schannel" = @{ Opis="Greška TLS/SSL protokola."; Zasto="Nevažeći mrežni sertifikat ili pogrešno vreme."; Sugestija="Podesite tačno sistemsko vreme i datum." }
-    "Winlogon" = @{ Opis="Greška pri prijavljivanju korisnika."; Zasto="Problem u korisničkoj sesiji."; Sugestija="Restartujte računar i pokrenite SFC popravku." }
+    "WHEA-Logger" = @{ Description="CPU/RAM/PCIe hardware error."; Why="Voltage drop, overheating, or clock instability."; Solution="Disable overclocking/XMP, update BIOS, and check cooling." }
+    "Kernel-Power" = @{ Description="Sudden power loss (Event ID 41)."; Why="Power outage, overheating, or PSU failure."; Solution="Check power supply, extension cord, and CPU cooler." }
+    "Hyper-V-Hypervisor" = @{ Description="Virtualization not started (ID 42)."; Why="SVM Mode or VT-x disabled in BIOS."; Solution="Enter BIOS and enable 'SVM Mode' or 'VT-x'." }
+    "Kernel-Boot" = @{ Description="VBS security check (ID 124)."; Why="Requires active virtualization in BIOS."; Solution="Enable CPU Virtualization in BIOS settings." }
+    "EventLog" = @{ Description="Unexpected shutdown log (ID 6008)."; Why="Sudden power interruption in previous session."; Solution="Check power stability and cooling." }
+    "DistributedCOM" = @{ Description="DCOM service timeout (ID 10010/10016)."; Why="Brief timeout in background app response."; Solution="Message is 95% harmless and does not affect stability." }
+    "BugCheck" = @{ Description="Blue Screen of Death (BSOD ID 1001)."; Why="Fatal driver error or RAM failure."; Solution="Check C:\Windows\Minidump and run a RAM test." }
+    "Disk" = @{ Description="Disk I/O error (ID 7/11/15/51)."; Why="Bad sectors, cable issue, or NVMe/SATA controller fault."; Solution="Immediately back up data, run 'chkdsk C: /f /r', and check drive health." }
+    "Ntfs" = @{ Description="File system structure corruption (ID 55/137)."; Why="Sudden power loss during disk write."; Solution="Run 'chkdsk C: /f' to repair partition." }
+    "Display" = @{ Description="GPU driver crash and recovery (ID 4101)."; Why="Graphics overheating, unstable clock, or bad driver."; Solution="Clean drivers with DDU tool and install fresh driver." }
+    "nvlddmkm" = @{ Description="NVIDIA GeForce driver crash."; Why="Loss of GPU response due to overheating or voltage."; Solution="Reinstall NVIDIA drivers (Clean Install)." }
+    "amdkmdag" = @{ Description="AMD Radeon driver crash."; Why="Radeon GPU driver failure."; Solution="Reset Radeon Adrenalin settings and update driver." }
+    "igfx" = @{ Description="Intel integrated graphics crash."; Why="Loss of integrated GPU response in CPU."; Solution="Update Intel HD/Iris driver." }
+    "Service Control Manager" = @{ Description="Windows service crash (ID 7000/7001)."; Why="Issue with system service dependencies."; Solution="Run Option 5 (System Repair DISM/SFC)." }
+    "Volmgr" = @{ Description="Failed to write crash dump (ID 161)."; Why="SSD power loss during system crash."; Solution="Check SSD connection and free space on drive C:." }
+    "Kernel-General" = @{ Description="Registry write error (ID 5/6)."; Why="Interrupted write to System Hive during shutdown."; Solution="Run SFC /scannow repair." }
+    "Kernel-PNP" = @{ Description="PnP device driver not loaded (ID 219)."; Why="Missing driver for attached hardware."; Solution="Install official driver in Device Manager." }
+    "BitLocker-Driver" = @{ Description="BitLocker encryption issue."; Why="Changes in TPM chip or access disabled."; Solution="Save your BitLocker recovery key." }
+    "WindowsUpdateClient" = @{ Description="Update error (ID 20/31)."; Why="Corrupted Windows Update cache."; Solution="Run Option 6 (Windows Update Repair)." }
+    "SideBySide" = @{ Description="C++ library error (ID 33/35/59)."; Why="Missing Microsoft Visual C++ Redistributable."; Solution="Install Visual C++ All-in-One package." }
+    "Application Error" = @{ Description="Critical program crash (.exe ID 1000)."; Why="Invalid memory address access."; Solution="Reinstall the specified program." }
+    "Application Hang" = @{ Description="Application freezing (ID 1002)."; Why="Infinite loop or interrupted I/O response."; Solution="Check CPU load and disk health." }
+    "Schannel" = @{ Description="TLS/SSL protocol error."; Why="Invalid network certificate or incorrect system time."; Solution="Set correct system time and date." }
+    "Winlogon" = @{ Description="User logon error."; Why="Issue in user session."; Solution="Restart computer and run SFC repair." }
 }
 
 try {
     switch ($TaskName) {
         "HardverScan" {
             Set-Progress 5
-            Write-Log "=== COMPREHENSIVE HARDVERSKI I SISTEMSKI SKEN ===" "H"
+            Write-Log "=== COMPREHENSIVE HARDWARE AND SYSTEM SCAN ===" "H"
 
             Set-Progress 20
-            Write-Log "Očitavanje OS-a, procesora i memorije..." "I"
+            Write-Log "Reading OS, processor, and memory info..." "I"
             try {
                 $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
                 $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop
@@ -122,18 +122,18 @@ try {
                 $buildNum   = $regVer.CurrentBuild
                 $ubrNum     = $regVer.UBR
                 
-                $fullOSInfo = "$($os.Caption) ($($os.OSArchitecture)) | Verzija: $displayVer (Build $buildNum.$ubrNum)"
+                $fullOSInfo = "$($os.Caption) ($($os.OSArchitecture)) | Version: $displayVer (Build $buildNum.$ubrNum)"
                 $lastUpdate = Get-HotFix -ErrorAction SilentlyContinue | Sort-Object InstalledOn -Descending | Select-Object -First 1
-                $updateStr  = if ($lastUpdate) { "$($lastUpdate.HotFixID) ($($lastUpdate.InstalledOn))" } else { "Nije očitano" }
+                $updateStr  = if ($lastUpdate) { "$($lastUpdate.HotFixID) ($($lastUpdate.InstalledOn))" } else { "Not detected" }
 
                 Write-Log "[OS] $fullOSInfo" "P"
-                Write-Log "[POSLEDNJI UPDATE] $updateStr" "P"
-                Write-Log "[CPU] $($cpu.Name) | Jezgara: $($cpu.NumberOfCores) | Niti: $($cpu.NumberOfLogicalProcessors)" "P"
-                Write-Log "[RAM] Ukupno: $([math]::Round($os.TotalVisibleMemorySize/1MB,2)) GB | Slobodno: $([math]::Round($os.FreePhysicalMemory/1MB,2)) GB" "P"
-            } catch { Write-Log "[GREŠKA] Greška pri očitavanju OS podataka." "F" }
+                Write-Log "[LAST UPDATE] $updateStr" "P"
+                Write-Log "[CPU] $($cpu.Name) | Cores: $($cpu.NumberOfCores) | Threads: $($cpu.NumberOfLogicalProcessors)" "P"
+                Write-Log "[RAM] Total: $([math]::Round($os.TotalVisibleMemorySize/1MB,2)) GB | Free: $([math]::Round($os.FreePhysicalMemory/1MB,2)) GB" "P"
+            } catch { Write-Log "[ERROR] Error reading OS data." "F" }
 
             Set-Progress 40
-            Write-Log "Očitavanje GPU-a i RAM slotova..." "I"
+            Write-Log "Reading GPU and RAM slot details..." "I"
             try {
                 Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue | ForEach-Object {
                     $vramStr = if ($_.AdapterRAM -and $_.AdapterRAM -gt 0 -and $_.AdapterRAM -lt 4294967295) {
@@ -141,28 +141,28 @@ try {
                     } elseif ($_.AdapterRAM -ge 4294967295) {
                         ">= 4 GB (VRAM)"
                     } else {
-                        "Deljena / Integrisana (RAM)"
+                        "Shared / Integrated (RAM)"
                     }
-                    Write-Log "[GPU] Model: $($_.Name) | VRAM: $vramStr | Drajver: $($_.DriverVersion)" "P"
+                    Write-Log "[GPU] Model: $($_.Name) | VRAM: $vramStr | Driver: $($_.DriverVersion)" "P"
                 }
                 Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue | ForEach-Object {
                     $capGB = if ($_.Capacity) { [math]::Round($_.Capacity/1GB, 2) } else { 0 }
-                    Write-Log "[RAM SLOT] Slot: $($_.DeviceLocator) | Kapacitet: ${capGB} GB | Brzina: $($_.Speed) MHz" "P"
+                    Write-Log "[RAM SLOT] Slot: $($_.DeviceLocator) | Capacity: ${capGB} GB | Speed: $($_.Speed) MHz" "P"
                 }
             } catch {}
 
             Set-Progress 60
-            Write-Log "Provera S.M.A.R.T. zdravlja diskova..." "I"
+            Write-Log "Checking S.M.A.R.T. disk health..." "I"
             try {
                 $disks = Get-PhysicalDisk -ErrorAction SilentlyContinue
                 if ($disks) {
                     foreach ($d in $disks) {
                         $type = if ($d.MediaType -and $d.MediaType -ne 'Unspecified') { $d.MediaType } else { "NVMe/SSD" }
                         if ($d.HealthStatus -eq 'Healthy') {
-                            Write-Log "[DISK OK] $($d.FriendlyName) ($type) | Status: ZDRAV" "P"
+                            Write-Log "[DISK OK] $($d.FriendlyName) ($type) | Status: HEALTHY" "P"
                         } else {
-                            Write-Log "[DISK KRITIČNO] $($d.FriendlyName) ($type) | Status: $($d.HealthStatus)!" "F"
-                            Write-Log "   -> HITNA SUGESTIJA: Napravite bekap podataka i zamenite disk." "D"
+                            Write-Log "[DISK CRITICAL] $($d.FriendlyName) ($type) | Status: $($d.HealthStatus)!" "F"
+                            Write-Log "   -> URGENT SUGGESTION: Back up your data immediately and replace the disk." "D"
                         }
                     }
                 } else {
@@ -173,7 +173,7 @@ try {
             } catch {}
 
             Set-Progress 80
-            Write-Log "Analiza Windows PnP uređaja i kodova grešaka..." "I"
+            Write-Log "Analyzing Windows PnP devices and error codes..." "I"
             try {
                 $pnpErrors = Get-CimInstance Win32_PnPEntity -ErrorAction SilentlyContinue | Where-Object { 
                     $_.ConfigManagerErrorCode -ne 0 -and $_.ConfigManagerErrorCode -ne $null -and $_.ConfigManagerErrorCode -ne 22
@@ -182,73 +182,73 @@ try {
                     foreach ($re in $pnpErrors) {
                         $devName = if ($re.Name) { $re.Name } else { $re.DeviceId }
                         $errCode = $re.ConfigManagerErrorCode
-                        Write-Log "[KVAR UREĐAJA] $devName (Windows Code $errCode)" "F"
+                        Write-Log "[DEVICE FAULT] $devName (Windows Code $errCode)" "F"
                         if ($CodeManagerDict.ContainsKey($errCode)) {
                             $info = $CodeManagerDict[$errCode]
-                            Write-Log "   -> OPIS: $($info.Opis)" "D"
-                            Write-Log "   -> REŠENJE: $($info.Sugestija)" "P"
+                            Write-Log "   -> DESCRIPTION: $($info.Description)" "D"
+                            Write-Log "   -> SOLUTION: $($info.Suggestion)" "P"
                         } else {
-                            Write-Log "   -> REŠENJE: Reinstalirajte drajver ili proverite priključak u Device Manager-u." "P"
+                            Write-Log "   -> SOLUTION: Reinstall driver or check connection in Device Manager." "P"
                         }
                     }
-                } else { Write-Log "[OK] Svi aktivni hardverski uređaji rade ispravno." "P" }
+                } else { Write-Log "[OK] All active hardware devices are functioning properly." "P" }
             } catch {}
 
             Set-Progress 95
-            Write-Log "`n=== ANALIZA SISTEMSKIH DNEVNIKA (POSLEDNJIH 7 DANA) ===" "H"
+            Write-Log "`n=== SYSTEM LOG ANALYSIS (PAST 7 DAYS) ===" "H"
             try {
                 $events = Get-WinEvent -FilterHashtable @{LogName='System'; Level=1,2; StartTime=(Get-Date).AddDays(-7)} -MaxEvents 100 -ErrorAction SilentlyContinue | Select-Object -First 10
                 if ($events) {
                     foreach ($e in $events) {
                         $evtTime = $e.TimeCreated.ToString('dd.MM.yyyy. HH:mm:ss')
                         $src     = $e.ProviderName
-                        Write-Log "[INCIDENT] Vreme: $evtTime | Izvor: $src | Event ID: $($e.Id)" "E"
+                        Write-Log "[INCIDENT] Time: $evtTime | Source: $src | Event ID: $($e.Id)" "E"
                         
                         $matched = $false
                         foreach ($kbKey in $EventKB.Keys) {
                             if ($src -match $kbKey) {
                                 $matched = $true
                                 $kb = $EventKB[$kbKey]
-                                Write-Log "   -> PROBLEM: $($kb.Opis)" "F"
-                                Write-Log "   -> ZAŠTO: $($kb.Zasto)" "D"
-                                Write-Log "   -> REŠENJE: $($kb.Sugestija)" "P"
+                                Write-Log "   -> PROBLEM: $($kb.Description)" "F"
+                                Write-Log "   -> WHY: $($kb.Why)" "D"
+                                Write-Log "   -> SOLUTION: $($kb.Solution)" "P"
                                 break
                             }
                         }
                         if (-not $matched) {
                             $msgStr = try { $e.Message } catch { $null }
-                            if (-not $msgStr) { $msgStr = "Sistemski događaj zabeležen od strane provajdera '$src'." }
+                            if (-not $msgStr) { $msgStr = "System event recorded by provider '$src'." }
                             $msgStr = ($msgStr -replace "[\r\n]+", " ").Trim()
                             if ($msgStr.Length -gt 110) { $msgStr = $msgStr.Substring(0, 110) + "..." }
-                            Write-Log "   -> OPIS: $msgStr" "I"
-                            Write-Log "   -> REŠENJE: Pokrenite Opciju 5 (Popravka Sistema) i ažurirajte drajvere." "D"
+                            Write-Log "   -> DESCRIPTION: $msgStr" "I"
+                            Write-Log "   -> SOLUTION: Run Option 5 (System Repair) and update drivers." "D"
                         }
                     }
-                } else { Write-Log "[OK] Nema zabeleženih kritičnih padova u sistemskom dnevniku." "P" }
-            } catch { Write-Log "[OK] Nisu detektovani kritični padovi u posmatranom periodu." "P" }
+                } else { Write-Log "[OK] No critical crashes recorded in system log." "P" }
+            } catch { Write-Log "[OK] No critical crashes detected in the observed period." "P" }
 
             Set-Progress 100
-            Write-Log "=== HARDVERSKI SKEN I ANALIZA ZAVRŠENI ===" "H"
+            Write-Log "=== HARDWARE SCAN AND ANALYSIS COMPLETED ===" "H"
         }
 
         "MreznaDijagnostika" {
             Set-Progress 10
-            Write-Log "=== MREŽNA DIJAGNOSTIKA I PING TEST ===" "H"
+            Write-Log "=== NETWORK DIAGNOSTICS AND PING TEST ===" "H"
             Set-Progress 30
-            Write-Log "Skeniram aktivne mrežne kartice i IP adrese..." "I"
+            Write-Log "Scanning active network adapters and IP addresses..." "I"
             try {
                 Get-CimInstance Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object { $_.IPEnabled -eq $true } | ForEach-Object {
                     Write-Log "[ADAPTER] $($_.Description)" "P"
-                    Write-Log "   -> IPv4 Adresa: $($_.IPAddress -join ', ')" "I"
-                    Write-Log "   -> Mrežna Maska: $($_.IPSubnet -join ', ')" "I"
+                    Write-Log "   -> IPv4 Address: $($_.IPAddress -join ', ')" "I"
+                    Write-Log "   -> Subnet Mask: $($_.IPSubnet -join ', ')" "I"
                     Write-Log "   -> Gateway: $($_.DefaultIPGateway -join ', ')" "I"
-                    Write-Log "   -> DNS Serveri: $($_.DNSServerSearchOrder -join ', ')" "I"
-                    Write-Log "   -> MAC Adresa: $($_.MACAddress)" "I"
+                    Write-Log "   -> DNS Servers: $($_.DNSServerSearchOrder -join ', ')" "I"
+                    Write-Log "   -> MAC Address: $($_.MACAddress)" "I"
                 }
             } catch {}
 
             Set-Progress 60
-            Write-Log "`nPokrećem Ping test ka ključnim serverima..." "H"
+            Write-Log "`nRunning Ping test to key servers..." "H"
             $pingTargets = @(
                 @{ Name="Google Public DNS"; IP="8.8.8.8" },
                 @{ Name="Cloudflare DNS"; IP="1.1.1.1" }
@@ -258,28 +258,28 @@ try {
                 try {
                     $res = $pinger.Send($pt.IP, 2000)
                     if ($res.Status -eq 'Success') {
-                        Write-Log "[PING OK] $($pt.Name) ($($pt.IP)) | Odziv: $($res.RoundtripTime) ms" "P"
+                        Write-Log "[PING OK] $($pt.Name) ($($pt.IP)) | Response time: $($res.RoundtripTime) ms" "P"
                     } else {
                         Write-Log "[PING FAIL] $($pt.Name) ($($pt.IP)) | Status: $($res.Status)" "F"
                     }
-                } catch { Write-Log "[PING GREŠKA] $($pt.Name) : $($_.Exception.Message)" "F" }
+                } catch { Write-Log "[PING ERROR] $($pt.Name) : $($_.Exception.Message)" "F" }
             }
             Set-Progress 100
-            Write-Log "=== MREŽNA DIJAGNOSTIKA ZAVRŠENA ===" "H"
+            Write-Log "=== NETWORK DIAGNOSTICS COMPLETED ===" "H"
         }
 
         "BatteryReport" {
             Set-Progress 10
-            Write-Log "=== TEST BATERIJE I ZDRAVLJA LAPTOPA ===" "H"
+            Write-Log "=== LAPTOP BATTERY AND HEALTH TEST ===" "H"
             Set-Progress 30
             $batt = Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue
             if (-not $batt) {
-                Write-Log "[INFO] Računar je stoni PC (nema ugrađenu bateriju)." "I"
-                Write-Log "[OK] Test baterije preskočen (nije primenjivo na Desktop)." "P"
+                Write-Log "[INFO] Computer is a Desktop PC (no built-in battery)." "I"
+                Write-Log "[OK] Battery test skipped (Not applicable to Desktop)." "P"
             } else {
                 Set-Progress 50
                 foreach ($b in $batt) {
-                    Write-Log "[BATERIJA] Model: $($b.Name) | Napunjenost: $($b.EstimatedChargeRemaining)%" "P"
+                    Write-Log "[BATTERY] Model: $($b.Name) | Charge: $($b.EstimatedChargeRemaining)%" "P"
                 }
                 try {
                     $fullCap = (Get-CimInstance -Namespace root\wmi -ClassName MSBatteryFullCapacity -ErrorAction SilentlyContinue | Select-Object -First 1).FullChargedCapacity
@@ -287,11 +287,11 @@ try {
                     if ($designCap -and $designCap -gt 0) {
                         $health = [math]::Min(100, [math]::Round(($fullCap / $designCap) * 100, 1))
                         $wear   = [math]::Max(0, [math]::Round(100 - $health, 1))
-                        Write-Log "[KAPACITET] Fabrički: ${designCap} mWh | Trenutni max: ${fullCap} mWh" "D"
+                        Write-Log "[CAPACITY] Factory: ${designCap} mWh | Current Max: ${fullCap} mWh" "D"
                         if ($health -ge 80) {
-                            Write-Log "[STATUS] Zdravlje baterije: ${health}% (Degradacija: ${wear}%) - Dobro stanje." "P"
+                            Write-Log "[STATUS] Battery Health: ${health}% (Degradation: ${wear}%) - Good condition." "P"
                         } else {
-                            Write-Log "[UPOZORENJE] Zdravlje baterije: ${health}% (Degradacija: ${wear}%) - Baterija je istrošena." "F"
+                            Write-Log "[WARNING] Battery Health: ${health}% (Degradation: ${wear}%) - Battery is worn out." "F"
                         }
                     }
                 } catch {}
@@ -302,17 +302,17 @@ try {
                 if (Test-Admin) {
                     $null = Start-Process "powercfg.exe" -ArgumentList "/batteryreport /output `"$battReportPath`"" -Wait -NoNewWindow
                     if (Test-Path $battReportPath) {
-                        Write-Log "[OK] HTML izveštaj sačuvan na Desktopu: 'battery-report.html'." "P"
+                        Write-Log "[OK] HTML report saved to Desktop: 'battery-report.html'." "P"
                     }
-                } else { Write-Log "[NAPOMENA] Generisanje HTML izveštaja zahteva Administrator prava." "D" }
+                } else { Write-Log "[NOTE] Generating HTML report requires Administrator privileges." "D" }
             }
             Set-Progress 100
-            Write-Log "=== TEST BATERIJE ZAVRŠEN ===" "H"
+            Write-Log "=== BATTERY TEST COMPLETED ===" "H"
         }
 
         "CiscenjeTemp" {
             Set-Progress 10
-            Write-Log "=== ČIŠĆENJE PRIVREMENIH FAJLOVA (TEMP) ===" "H"
+            Write-Log "=== TEMPORARY FILES CLEANUP (TEMP) ===" "H"
             $tempFolders = @("$env:TEMP", "C:\Windows\Temp")
             $cnt = 0; $bytes = 0
             foreach ($folder in $tempFolders) {
@@ -329,102 +329,102 @@ try {
             }
             Set-Progress 90
             $sizeMB = [math]::Round($bytes / 1MB, 2)
-            Write-Log "[REZULTAT] Uspešno očišćeno $cnt fajlova (${sizeMB} MB oslobođeno)." "P"
-            Write-Log "[NAPOMENA] Zaključani fajlovi aktivnih aplikacija su bezbedno preskočeni." "D"
+            Write-Log "[RESULT] Successfully cleaned $cnt files (${sizeMB} MB freed)." "P"
+            Write-Log "[NOTE] Locked files of active applications were safely skipped." "D"
             Set-Progress 100
-            Write-Log "=== ČIŠĆENJE TEMP FAJLOVA ZAVRŠENO ===" "H"
+            Write-Log "=== TEMP FILES CLEANUP COMPLETED ===" "H"
         }
 
         "SistemskaPopravka" {
-            if (-not (Test-Admin)) { Write-Log "[GREŠKA] Pokrenite Fercero USB Alat kao Administrator!" "F"; return }
+            if (-not (Test-Admin)) { Write-Log "[ERROR] Run Fercero USB Tool as Administrator!" "F"; return }
             Set-Progress 10
-            Write-Log "1/4: Pokrećem DISM /CheckHealth..." "H"
+            Write-Log "1/4: Running DISM /CheckHealth..." "H"
             $null = Start-Process "DISM.exe" -ArgumentList "/Online /Cleanup-Image /CheckHealth" -Wait -NoNewWindow
             
             Set-Progress 35
-            Write-Log "2/4: Pokrećem DISM /ScanHealth (Može potrajati 2-3 minuta)..." "H"
+            Write-Log "2/4: Running DISM /ScanHealth (May take 2-3 minutes)..." "H"
             $null = Start-Process "DISM.exe" -ArgumentList "/Online /Cleanup-Image /ScanHealth" -Wait -NoNewWindow
             
             Set-Progress 60
-            Write-Log "3/4: Pokrećem DISM /RestoreHealth (Obnova sistemskih fajlova)..." "H"
+            Write-Log "3/4: Running DISM /RestoreHealth (Restoring system files)..." "H"
             $dism = Start-Process "DISM.exe" -ArgumentList "/Online /Cleanup-Image /RestoreHealth" -Wait -NoNewWindow -PassThru
-            if ($dism.ExitCode -eq 0) { Write-Log "[OK] DISM obnova uspešna." "P" } else { Write-Log "[UPOZORENJE] DISM exit code: $($dism.ExitCode)" "E" }
+            if ($dism.ExitCode -eq 0) { Write-Log "[OK] DISM restoration successful." "P" } else { Write-Log "[WARNING] DISM exit code: $($dism.ExitCode)" "E" }
             
             Set-Progress 85
-            Write-Log "4/4: Pokrećem SFC /scannow (Skeniranje bazičnih sistemskih fajlova)..." "H"
+            Write-Log "4/4: Running SFC /scannow (Scanning core system files)..." "H"
             $sfc = Start-Process "sfc.exe" -ArgumentList "/scannow" -Wait -NoNewWindow -PassThru
-            if ($sfc.ExitCode -eq 0) { Write-Log "[OK] SFC skeniranje završeno bez uočenih grešaka." "P" } else { Write-Log "[UPOZORENJE] SFC je popravio oštećene fajlove." "F" }
+            if ($sfc.ExitCode -eq 0) { Write-Log "[OK] SFC scan completed with no errors found." "P" } else { Write-Log "[WARNING] SFC found and repaired corrupted files." "F" }
             
             $desktopPath = [Environment]::GetFolderPath('Desktop')
             $reportFile = Join-Path $desktopPath "sfcdetails.txt"
             $cbsLog = "$env:windir\Logs\CBS\CBS.log"
             if (Test-Path $cbsLog) {
                 Select-String -Path $cbsLog -Pattern "\[SR\]" -ErrorAction SilentlyContinue | ForEach-Object { $_.Line } | Out-File $reportFile -Encoding utf8 -ErrorAction SilentlyContinue
-                Write-Log "[OK] Detaljan SFC izveštaj sačuvan na Desktopu: 'sfcdetails.txt'." "P"
+                Write-Log "[OK] Detailed SFC report saved to Desktop: 'sfcdetails.txt'." "P"
             }
             Set-Progress 100
-            Write-Log "=== SISTEMSKA POPRAVKA ZAVRŠENA ===" "H"
+            Write-Log "=== SYSTEM REPAIR COMPLETED ===" "H"
         }
 
         "UpdatePopravka" {
-            if (-not (Test-Admin)) { Write-Log "[GREŠKA] Pokrenite Fercero USB Alat kao Administrator!" "F"; return }
+            if (-not (Test-Admin)) { Write-Log "[ERROR] Run Fercero USB Tool as Administrator!" "F"; return }
             Set-Progress 15
-            Write-Log "Aktivacija TrustedInstaller servisa..." "H"
+            Write-Log "Activating TrustedInstaller service..." "H"
             Start-Service -Name "trustedinstaller" -ErrorAction SilentlyContinue
 
             Set-Progress 35
-            Write-Log "Zaustavljanje Windows Update servisa..." "I"
+            Write-Log "Stopping Windows Update services..." "I"
             "bits","wuauserv","msiserver","cryptsvc","appidsvc" | ForEach-Object {
                 Stop-Service -Name $_ -Force -ErrorAction SilentlyContinue
             }
 
             Set-Progress 60
-            Write-Log "Preimenovanje keš foldera..." "I"
+            Write-Log "Renaming cache folders..." "I"
             $dateStr = Get-Date -Format 'yyyyMMdd_HHmmss'
             if (Test-Path "$env:SystemRoot\SoftwareDistribution") { Rename-Item "$env:SystemRoot\SoftwareDistribution" "SoftwareDistribution.$dateStr.bak" -ErrorAction SilentlyContinue }
             if (Test-Path "$env:SystemRoot\System32\catroot2") { Rename-Item "$env:SystemRoot\System32\catroot2" "catroot2.$dateStr.bak" -ErrorAction SilentlyContinue }
 
             Set-Progress 80
-            Write-Log "Čišćenje komponenata i ponovno pokretanje servisa..." "I"
+            Write-Log "Cleaning components and restarting services..." "I"
             Start-Process "DISM.exe" -ArgumentList "/Online /Cleanup-image /StartComponentCleanup" -Wait -NoNewWindow
             "bits","wuauserv","msiserver","cryptsvc","appidsvc" | ForEach-Object {
                 Start-Service -Name $_ -ErrorAction SilentlyContinue
             }
 
             Set-Progress 100
-            Write-Log "[OK] Windows Update sistem uspešno resetovan." "P"
+            Write-Log "[OK] Windows Update system successfully reset." "P"
         }
 
         "MrezniReset" {
-            if (-not (Test-Admin)) { Write-Log "[GREŠKA] Pokrenite Fercero USB Alat kao Administrator!" "F"; return }
+            if (-not (Test-Admin)) { Write-Log "[ERROR] Run Fercero USB Tool as Administrator!" "F"; return }
             Set-Progress 30
-            Write-Log "Resetovanje DNS keša..." "H"
+            Write-Log "Flushing DNS cache..." "H"
             Start-Process "ipconfig.exe" -ArgumentList "/flushdns" -Wait -NoNewWindow
             Set-Progress 60
-            Write-Log "Resetovanje Winsock i TCP/IP protokola..." "H"
+            Write-Log "Resetting Winsock and TCP/IP protocols..." "H"
             Start-Process "netsh.exe" -ArgumentList "winsock reset" -Wait -NoNewWindow
             Start-Process "netsh.exe" -ArgumentList "int ip reset" -Wait -NoNewWindow
             Set-Progress 100
-            Write-Log "[OK] Mrežni protokoli (TCP/IP i Winsock) uspešno resetovani." "P"
+            Write-Log "[OK] Network protocols (TCP/IP and Winsock) successfully reset." "P"
         }
 
         "RestartBios" {
-            if (-not (Test-Admin)) { Write-Log "[GREŠKA] Ulazak u Advanced Startup zahteva Administrator prava!" "F"; return }
+            if (-not (Test-Admin)) { Write-Log "[ERROR] Entering Advanced Startup requires Administrator privileges!" "F"; return }
 
-            Write-Log "=== RESTART U ADVANCED STARTUP MENI ===" "H"
-            Write-Log "Šaljem sistemsku komandu za restartovanje u Napredne Opcije Pokretanja..." "I"
-            Write-Log "   -> U meniju koji se otvori možete izabrati: BIOS/UEFI Settings, Safe Mode ili Startup Repair." "P"
+            Write-Log "=== RESTART TO ADVANCED STARTUP MENU ===" "H"
+            Write-Log "Sending system command to restart into Advanced Startup Options..." "I"
+            Write-Log "   -> In the menu that opens, you can select: BIOS/UEFI Settings, Safe Mode, or Startup Repair." "P"
             
             $proc = Start-Process "shutdown.exe" -ArgumentList "/r /o /t 2" -Wait -NoNewWindow -PassThru
             if ($proc.ExitCode -ne 0) {
-                Write-Log "[GREŠKA] Greška pri slanju komande za restart (Exit Code: $($proc.ExitCode))." "F"
+                Write-Log "[ERROR] Error sending restart command (Exit Code: $($proc.ExitCode))." "F"
             } else {
-                Write-Log "[OK] Računar se restartuje u Advanced Startup meni za 2 sekunde..." "P"
+                Write-Log "[OK] Computer will restart into Advanced Startup menu in 2 seconds..." "P"
             }
             Set-Progress 100
         }
     }
-} catch { Write-Log "[KRITIČNA GREŠKA] Exception: $($_.Exception.Message)" "F" }
+} catch { Write-Log "[CRITICAL ERROR] Exception: $($_.Exception.Message)" "F" }
 finally { Set-Progress 100 }
 '@
 
@@ -437,7 +437,7 @@ $xamlString = @"
         Title="Fercero USB Tool v8.7 Final Edition" Height="820" Width="1220"
         WindowStartupLocation="CenterScreen" Background="#0B0E14" Foreground="#F1F5F9">
     <Window.Resources>
-        <!-- Moderni Slim ScrollBar -->
+        <!-- Modern Slim ScrollBar -->
         <Style TargetType="ScrollBar">
             <Setter Property="Width" Value="3"/>
             <Setter Property="MinWidth" Value="3"/>
@@ -519,7 +519,7 @@ $xamlString = @"
         <Border Grid.Column="0" Grid.Row="0" Background="#121622" CornerRadius="12" Padding="14" Margin="0,0,14,14" BorderBrush="#1E2536" BorderThickness="1">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Top" Margin="2,2,2,10">
-                    <TextBlock Text="⚡ FERCERO USB ALAT" FontSize="18" FontWeight="Bold" Foreground="#38BDF8"/>
+                    <TextBlock Text="⚡ FERCERO USB TOOL" FontSize="18" FontWeight="Bold" Foreground="#38BDF8"/>
                     <TextBlock Text="USB Diagnostics v8.7" FontSize="11" Foreground="#64748B" Margin="0,2,0,0"/>
                 </StackPanel>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -536,7 +536,7 @@ $xamlString = @"
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <DockPanel Grid.Row="0" Margin="0,0,0,12">
-                    <TextBlock Text="DIJAGNOSTIČKA KONZOLA I IZVEŠTAJ" FontSize="12" FontWeight="Bold" Foreground="#94A3B8" VerticalAlignment="Center"/>
+                    <TextBlock Text="DIAGNOSTIC CONSOLE AND REPORT" FontSize="12" FontWeight="Bold" Foreground="#94A3B8" VerticalAlignment="Center"/>
                 </DockPanel>
                 <RichTextBox x:Name="LogBox" Grid.Row="1" Background="Transparent" Foreground="#F8FAFC" FontFamily="Consolas" FontSize="12.5" BorderThickness="0" IsReadOnly="True" VerticalScrollBarVisibility="Auto">
                     <FlowDocument PagePadding="0"/>
@@ -551,7 +551,7 @@ $xamlString = @"
                     <ColumnDefinition Width="260"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="StatusLbl" Text="Status: Spreman za rad." FontWeight="SemiBold" Foreground="#38BDF8" VerticalAlignment="Center"/>
+                <TextBlock x:Name="StatusLbl" Text="Status: Ready." FontWeight="SemiBold" Foreground="#38BDF8" VerticalAlignment="Center"/>
                 <ProgressBar x:Name="PBar" Grid.Column="1" Height="8" Background="#1A202C" Foreground="#38BDF8" BorderThickness="0" Minimum="0" Maximum="100" Value="0">
                     <ProgressBar.Template>
                         <ControlTemplate TargetType="ProgressBar">
@@ -579,7 +579,7 @@ $xamlString = @"
 "@
 
 # ==============================================================================
-# 3. KONTROLER I EVENT HANDLERI
+# 3. CONTROLLER AND EVENT HANDLERS
 # ==============================================================================
 $reader = [System.Xml.XmlReader]::Create([System.IO.StringReader]::new($xamlString))
 $Window = [System.Windows.Markup.XamlReader]::Load($reader)
@@ -598,17 +598,17 @@ $BtnStack  = $Window.FindName("BtnStack")
 $navStyle  = $Window.FindResource("NavBtn")
 $toolStyle = $Window.FindResource("ToolBtn")
 
-# BAZIČNE DIJAGNOSTIČKE FUNKCIJE
+# BASIC DIAGNOSTIC FUNCTIONS
 $btnDefs = @(
-    @{ L="1. Hardverski Sken & Logovi"; K="HardverScan" },
-    @{ L="2. Mrežna Dijagnostika & Ping"; K="MreznaDijagnostika" },
-    @{ L="3. Test Baterije (Laptop)"; K="BatteryReport" },
-    @{ L="4. Čišćenje Smeća (Temp)"; K="CiscenjeTemp" },
-    @{ L="5. Popravka Sistema (DISM/SFC)"; K="SistemskaPopravka" },
-    @{ L="6. Popravka Windows Update-a"; K="UpdatePopravka" },
-    @{ L="7. Reset Mreže i DNS-a"; K="MrezniReset" },
-    @{ L="8. Sačuvaj Izveštaj (.html)"; K="SacuvajIzvestaj" },
-    @{ L="9. Restart u Advanced Startup / BIOS"; K="RestartBios" }
+    @{ L="1. Hardware Scan & Logs"; K="HardverScan" },
+    @{ L="2. Network Diagnostics & Ping"; K="MreznaDijagnostika" },
+    @{ L="3. Battery Test (Laptop)"; K="BatteryReport" },
+    @{ L="4. Junk Cleanup (Temp)"; K="CiscenjeTemp" },
+    @{ L="5. System Repair (DISM/SFC)"; K="SistemskaPopravka" },
+    @{ L="6. Windows Update Repair"; K="UpdatePopravka" },
+    @{ L="7. Reset Network & DNS"; K="MrezniReset" },
+    @{ L="8. Save Report (.html)"; K="SacuvajIzvestaj" },
+    @{ L="9. Restart to Advanced Startup / BIOS"; K="RestartBios" }
 )
 
 foreach ($def in $btnDefs) {
@@ -620,7 +620,7 @@ foreach ($def in $btnDefs) {
     $BtnStack.Children.Add($b) | Out-Null
 }
 
-# DINAMIČKO SKENIRANJE PORTABLE ALATA SA USB-A (\Tools\)
+# DYNAMIC SCANNING OF PORTABLE TOOLS FROM USB (\Tools\)
 $usbToolsPath = if ($env:BAT_DIR) { Join-Path $env:BAT_DIR "Tools" } else { "Tools" }
 $detectedExeFiles = @()
 
@@ -628,9 +628,9 @@ if (Test-Path $usbToolsPath) {
     $detectedExeFiles = Get-ChildItem -Path $usbToolsPath -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue
 }
 
-# SEKCIJA U MENIJU ZA PRENOSIVE ALATE
+# SECTION IN MENU FOR PORTABLE TOOLS
 $headerTxt = [System.Windows.Controls.TextBlock]::new()
-$headerTxt.Text = "🧰 PRENOSIVI ALATI (USB)"
+$headerTxt.Text = "🧰 PORTABLE TOOLS (USB)"
 $headerTxt.FontSize = 11
 $headerTxt.FontWeight = [System.Windows.FontWeights]::Bold
 $headerTxt.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#94A3B8")
@@ -648,18 +648,18 @@ if ($detectedExeFiles.Count -gt 0) {
             param($s, $e)
             $exePath = $s.Tag
             try {
-                Append-Log "`n[POKRETANJE] Pokrećem prenosivi alat: $($s.Content)..." "#38BDF8"
+                Append-Log "`n[LAUNCH] Launching portable tool: $($s.Content)..." "#38BDF8"
                 Start-Process -FilePath $exePath -Verb RunAs -ErrorAction Stop
-                Append-Log "[OK] Alat uspešno pokrenut iz: $exePath" "#4ADE80"
+                Append-Log "[OK] Tool successfully launched from: $exePath" "#4ADE80"
             } catch {
-                Append-Log "[GREŠKA] Neuspešno pokretanje alata: $($_.Exception.Message)" "#F87171"
+                Append-Log "[ERROR] Failed to launch tool: $($_.Exception.Message)" "#F87171"
             }
         })
         $BtnStack.Children.Add($btn) | Out-Null
     }
 } else {
     $noToolsTxt = [System.Windows.Controls.TextBlock]::new()
-    $noToolsTxt.Text = "Nema .exe fajlova u \Tools\ folderu."
+    $noToolsTxt.Text = "No .exe files found in \Tools\ folder."
     $noToolsTxt.FontSize = 11
     $noToolsTxt.FontStyle = [System.Windows.FontStyles]::Italic
     $noToolsTxt.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#475569")
@@ -684,7 +684,7 @@ function Start-Task([string]$TaskName) {
         $desktopPath = [Environment]::GetFolderPath('Desktop')
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
         $dateFormatted = Get-Date -Format 'dd.MM.yyyy. HH:mm:ss'
-        $fileName = "FerceroUSB_Izvestaj_$ts.html"
+        $fileName = "FerceroUSB_Report_$ts.html"
         $filePathDesktop = Join-Path $desktopPath $fileName
 
         try {
@@ -700,9 +700,9 @@ function Start-Task([string]$TaskName) {
                 $color = "#E2E8F0"
                 if ($line -match "^===") { $color = "#38BDF8"; $escapedLine = "<strong>$escapedLine</strong>" }
                 elseif ($line -match "\[OK\]|\[DISK OK\]|\[PING OK\]|\[STATUS\]") { $color = "#4ADE80" }
-                elseif ($line -match "\[GREŠKA\]|\[KRITIČNO\]|\[INCIDENT\]|\[PING FAIL\]|\[KVAR UREĐAJA\]") { $color = "#F87171" }
-                elseif ($line -match "\[UPOZORENJE\]|\[NAPOMENA\]|\[KAPACITET\]") { $color = "#FACC15" }
-                elseif ($line -match "\[OS\]|\[CPU\]|\[RAM\]|\[GPU\]|\[DISK\]|\[BATERIJA\]|\[ADAPTER\]") { $color = "#38BDF8" }
+                elseif ($line -match "\[ERROR\]|\[CRITICAL\]|\[INCIDENT\]|\[PING FAIL\]|\[DEVICE FAULT\]") { $color = "#F87171" }
+                elseif ($line -match "\[WARNING\]|\[NOTE\]|\[CAPACITY\]") { $color = "#FACC15" }
+                elseif ($line -match "\[OS\]|\[LAST UPDATE\]|\[CPU\]|\[RAM\]|\[GPU\]|\[DISK\]|\[BATTERY\]|\[ADAPTER\]") { $color = "#38BDF8" }
 
                 $htmlLines += "<div class='log-line' style='color: $color;'>$escapedLine</div>"
             }
@@ -710,10 +710,10 @@ function Start-Task([string]$TaskName) {
 
             $htmlContent = @"
 <!DOCTYPE html>
-<html lang="sr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fercero USB Alat — Dijagnostički Izveštaj</title>
+    <title>Fercero USB Tool — Diagnostic Report</title>
     <style>
         body { background-color: #0B0E14; color: #F1F5F9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 24px; }
         .container { max-width: 1000px; margin: 0 auto; background-color: #121622; border: 1px solid #1E2536; border-radius: 12px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -728,12 +728,12 @@ function Start-Task([string]$TaskName) {
 <body>
     <div class="container">
         <div class="header">
-            <div class="title">⚡ FERCERO USB ALAT — DIJAGNOSTIČKI IZVEŠTAJ</div>
+            <div class="title">⚡ FERCERO USB TOOL — DIAGNOSTIC REPORT</div>
         </div>
         <div class="meta">
-            <strong>Datum i vreme skeniranja:</strong> $dateFormatted<br>
-            <strong>Računar:</strong> $env:COMPUTERNAME &nbsp;|&nbsp; <strong>Aktivni Korisnik:</strong> $env:USERNAME<br>
-            <strong>Platforma:</strong> Fercero USB Alat v8.7 Final Edition
+            <strong>Scan Date and Time:</strong> $dateFormatted<br>
+            <strong>Computer:</strong> $env:COMPUTERNAME &nbsp;|&nbsp; <strong>Active User:</strong> $env:USERNAME<br>
+            <strong>Platform:</strong> Fercero USB Tool v8.7 Final Edition
         </div>
         <div class="console">
             $htmlBody
@@ -743,25 +743,25 @@ function Start-Task([string]$TaskName) {
 </html>
 "@
             $htmlContent | Out-File -FilePath $filePathDesktop -Encoding utf8 -ErrorAction Stop
-            Append-Log "`n[OK] HTML IZVEŠTAJ SAČUVAN NA DESKTOPU: $filePathDesktop" "#4ADE80"
+            Append-Log "`n[OK] HTML REPORT SAVED TO DESKTOP: $filePathDesktop" "#4ADE80"
             
             if ($env:BAT_DIR -and (Test-Path $env:BAT_DIR)) {
                 $usbFolder = Join-Path $env:BAT_DIR "Reports"
                 if (-not (Test-Path $usbFolder)) { New-Item -ItemType Directory -Path $usbFolder -ErrorAction SilentlyContinue | Out-Null }
                 $filePathUSB = Join-Path $usbFolder $fileName
                 $htmlContent | Out-File -FilePath $filePathUSB -Encoding utf8 -ErrorAction SilentlyContinue
-                Append-Log "[OK] HTML IZVEŠTAJ SAČUVAN NA USB DRAJVU: $filePathUSB" "#4ADE80"
+                Append-Log "[OK] HTML REPORT SAVED TO USB DRIVE: $filePathUSB" "#4ADE80"
             }
 
-            [System.Windows.MessageBox]::Show("Kompletan HTML izveštaj je sačuvan na Desktopu!`n`nPutanja: $filePathDesktop", "Izveštaj Sačuvan", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+            [System.Windows.MessageBox]::Show("Complete HTML report saved to Desktop!`n`nPath: $filePathDesktop", "Report Saved", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
         } catch {
-            [System.Windows.MessageBox]::Show("Greška pri čuvanju izveštaja: $($_.Exception.Message)", "Greška", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+            [System.Windows.MessageBox]::Show("Error saving report: $($_.Exception.Message)", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
         }
         return
     }
 
     if ($TaskName -eq "RestartBios") {
-        $confirm = [System.Windows.MessageBox]::Show("Da li ste sigurni da želite da restartujete računar u Advanced Startup (Napredne Opcije Pokretanja)?", "Potvrda Restarta", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Warning)
+        $confirm = [System.Windows.MessageBox]::Show("Are you sure you want to restart the computer into Advanced Startup (Advanced Startup Options)?", "Restart Confirmation", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Warning)
         if ($confirm -ne [System.Windows.MessageBoxResult]::Yes) { return }
     }
 
@@ -769,7 +769,7 @@ function Start-Task([string]$TaskName) {
     $PBar.Value = 0
     $LogBox.Document.Blocks.Clear()
     foreach ($child in $BtnStack.Children) { if ($child -is [System.Windows.Controls.Button]) { $child.IsEnabled = $false } }
-    $StatusLbl.Text = "Status: Izvršavanje [$TaskName]..."
+    $StatusLbl.Text = "Status: Executing [$TaskName]..."
 
     $script:RS = [runspacefactory]::CreateRunspace()
     $script:RS.ApartmentState = "STA"
@@ -784,7 +784,7 @@ function Start-Task([string]$TaskName) {
     $script:Handle = $script:PSInst.BeginInvoke()
 }
 
-# TAJMER ZA TAČNO I BEZBEDNO PRATIĆE OSVEŽAVANJE INTERFEJSA
+# TIMER FOR ACCURATE AND SAFE INTERFACE REFRESHING
 $timer = [System.Windows.Threading.DispatcherTimer]::new()
 $timer.Interval = [TimeSpan]::FromMilliseconds(60)
 $timer.Add_Tick({
@@ -812,7 +812,7 @@ $timer.Add_Tick({
         $script:PSInst.Dispose()
         $script:RS.Close()
         $script:IsBusy = $false
-        $StatusLbl.Text = "Status: Spreman za rad."
+        $StatusLbl.Text = "Status: Ready."
         $PBar.Value = 100
         foreach ($child in $BtnStack.Children) { if ($child -is [System.Windows.Controls.Button]) { $child.IsEnabled = $true } }
     }
@@ -827,11 +827,11 @@ $Window.Add_Closing({
     }
 })
 
-Append-Log "Dobrodošli u Fercero USB Alat v8.7 (Final Edition)" "#38BDF8"
+Append-Log "Welcome to Fercero USB Tool v8.7 (Final Edition)" "#38BDF8"
 if ($detectedExeFiles.Count -gt 0) {
-    Append-Log "[INFO] Detektovano je $($detectedExeFiles.Count) prenosivih alata u '\Tools\' folderu." "#4ADE80"
+    Append-Log "[INFO] Detected $($detectedExeFiles.Count) portable tool(s) in '\Tools\' folder." "#4ADE80"
 } else {
-    Append-Log "[INFO] Ubacite prenosive alate (.exe) u '\Tools\' folder na USB-u za automatsku integraciju." "#FACC15"
+    Append-Log "[INFO] Place portable tools (.exe) into the '\Tools\' folder on the USB drive for automatic integration." "#FACC15"
 }
 Append-Log "--------------------------------------------------------------------------------------------------" "#334155"
 
@@ -839,8 +839,8 @@ Append-Log "--------------------------------------------------------------------
 
 } catch {
     [System.Windows.Forms.MessageBox]::Show(
-        "Kritična greška pri pokretanju aplikacije:`n`n$($_.Exception.Message)`n`nLokacija:`n$($_.ScriptStackTrace)",
-        "Fercero USB Alat - Dijagnostička Greška",
+        "Critical error starting application:`n`n$($_.Exception.Message)`n`nLocation:`n$($_.ScriptStackTrace)",
+        "Fercero USB Tool - Diagnostic Error",
         [System.Windows.Forms.MessageBoxButtons]::OK,
         [System.Windows.Forms.MessageBoxIcon]::Error
     )
