@@ -1,4 +1,4 @@
-# ⚡ Fercero USB Tool (v8.7 Final Edition)
+# ⚡ Fercero USB Tool (v8.7)
 
 **Fercero USB Tool** is an open-source, multi-threaded Windows diagnostic, repair, and optimization utility built with PowerShell and a modern WPF/XAML Dark Mode GUI. Designed to run directly from a USB drive, it streamlines IT maintenance, hardware troubleshooting, system repair, and network diagnostics.
 
